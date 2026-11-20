@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Classificador de níveis de produtividade com Naive Bayes.">
+  <title>Produtividade Digital | IFCE</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">NB</div>
+        <div>
+          <p class="eyebrow">PROJETO FINAL · PROBABILIDADE E ESTATÍSTICA</p>
+          <p class="brand-name">Engenharia da Computação · IFCE</p>
+        </div>
+      </div>
+      <div class="hero-copy">
+        <p class="eyebrow">SOCIAL MEDIA VS PRODUCTIVITY</p>
+        <h1>Como está sua <span>produtividade?</span></h1>
+        <p class="hero-description">
+          Informe alguns hábitos digitais e de rotina para estimar seu nível de produtividade
+          usando um classificador Naive Bayes.
+        </p>
+      </div>
+      <div class="model-chip">
+        <span class="status-dot"></span>
+        {% if model_ready %}Modelo treinado e disponível{% else %}Modelo ainda não treinado{% endif %}
+      </div>
+    </header>
+
+    {% if not model_ready %}
+      <div class="notice notice-warning" role="status">
+        <strong>Falta treinar o modelo.</strong>
+        Execute <code>python train.py</code> no terminal e depois reinicie o servidor Flask.
+      </div>
+    {% endif %}
+
+    {% if error_message %}
+      <div class="notice notice-error" role="alert">{{ error_message }}</div>
+    {% endif %}
+
+    <section class="content-grid">
+      <section class="form-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">DADOS DE ENTRADA</p>
+            <h2>Conte um pouco sobre sua rotina</h2>
+          </div>
+          <span class="step-label">14 informações</span>
+        </div>
+
+        <form id="prediction-form" action="{{ url_for('predict') }}" method="POST">
+          <div class="form-section">
+            <h3><span>01</span> Perfil e trabalho</h3>
+            <div class="field-grid">
+              <div class="field">
+                <label for="age">Idade</label>
+                <input id="age" name="age" type="number" min="18" max="65" step="1" placeholder="Ex.: 24" required>
+                <small>Em anos</small>
+              </div>
+              <div class="field">
+                <label for="job_type">Tipo de ocupação</label>
+                <input id="job_type" name="job_type" type="text" list="jobTypes" placeholder="Ex.: Student" required>
+                <datalist id="jobTypes">
+                  {% for item in job_types %}<option value="{{ item }}">{% endfor %}
+                </datalist>
+                <small>Use uma categoria da lista, quando disponível</small>
+              </div>
+              <div class="field">
+                <label for="work_hours_per_day">Horas de trabalho por dia</label>
+                <input id="work_hours_per_day" name="work_hours_per_day" type="number" min="0" max="12" step="0.1" placeholder="Ex.: 8" required>
+              </div>
+              <div class="field">
+                <label for="job_satisfaction_score">Satisfação com o trabalho</label>
+                <input id="job_satisfaction_score" name="job_satisfaction_score" type="number" min="0" max="10" step="0.1" placeholder="0 a 10" required>
+                <small>0 = muito baixa · 10 = muito alta</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3><span>02</span> Hábitos digitais</h3>
+            <div class="field-grid">
+              <div class="field">
+                <label for="daily_social_media_time">Tempo diário em redes sociais</label>
+                <div class="input-suffix"><input id="daily_social_media_time" name="daily_social_media_time" type="number" min="0" max="18" step="0.1" placeholder="Ex.: 3.5" required><span>h/dia</span></div>
+              </div>
+              <div class="field">
+                <label for="number_of_notifications">Notificações por dia</label>
+                <input id="number_of_notifications" name="number_of_notifications" type="number" min="0" max="200" step="1" placeholder="Ex.: 60" required>
+              </div>
+              <div class="field">
+                <label for="screen_time_before_sleep">Tela antes de dormir</label>
+                <div class="input-suffix"><input id="screen_time_before_sleep" name="screen_time_before_sleep" type="number" min="0" max="3" step="0.1" placeholder="Ex.: 1" required><span>h</span></div>
+              </div>
+              <div class="field">
+                <label for="uses_focus_apps">Utiliza aplicativos de foco?</label>
+                <select id="uses_focus_apps" name="uses_focus_apps" required>
+                  <option value="" selected disabled>Selecione</option>
+                  <option value="true">Sim</option>
+                  <option value="false">Não</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="has_digital_wellbeing_enabled">Bem-estar digital ativado?</label>
+                <select id="has_digital_wellbeing_enabled" name="has_digital_wellbeing_enabled" required>
+                  <option value="" selected disabled>Selecione</option>
+                  <option value="true">Sim</option>
+                  <option value="false">Não</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3><span>03</span> Saúde e organização da rotina</h3>
+            <div class="field-grid">
+              <div class="field">
+                <label for="stress_level">Nível de estresse</label>
+                <input id="stress_level" name="stress_level" type="number" min="1" max="10" step="0.1" placeholder="1 a 10" required>
+              </div>
+              <div class="field">
+                <label for="sleep_hours">Horas de sono por dia</label>
+                <div class="input-suffix"><input id="sleep_hours" name="sleep_hours" type="number" min="3" max="10" step="0.1" placeholder="Ex.: 7.5" required><span>h</span></div>
+              </div>
+              <div class="field">
+                <label for="breaks_during_work">Pausas durante o trabalho</label>
+                <input id="breaks_during_work" name="breaks_during_work" type="number" min="0" max="10" step="1" placeholder="Quantidade por dia" required>
+              </div>
+              <div class="field">
+                <label for="days_feeling_burnout_per_month">Dias de esgotamento no mês</label>
+                <input id="days_feeling_burnout_per_month" name="days_feeling_burnout_per_month" type="number" min="0" max="31" step="1" placeholder="0 a 31" required>
+              </div>
+              <div class="field">
+                <label for="weekly_offline_hours">Horas offline por semana</label>
+                <div class="input-suffix"><input id="weekly_offline_hours" name="weekly_offline_hours" type="number" min="0" max="100" step="0.1" placeholder="Ex.: 10" required><span>h/sem</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="button button-primary" type="submit" id="submit-button" {% if not model_ready %}disabled{% endif %}>
+              <span>Prever produtividade</span><span aria-hidden="true">→</span>
+            </button>
+            <button class="button button-secondary" type="reset">Limpar formulário</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="side-column">
+        <section class="result-card" id="result-panel" aria-live="polite" {% if not prediction %}hidden{% endif %}>
+          <p class="eyebrow">RESULTADO DO MODELO</p>
+          <h2>Sua classificação</h2>
+          <div class="result-class" id="result-class">{{ prediction or 'Aguardando previsão' }}</div>
+          <p class="result-confidence" id="result-confidence">
+            {% if probability is defined %}Probabilidade estimada: {{ probability }}%{% else %}Preencha o formulário para obter o resultado.{% endif %}
+          </p>
+          <div class="probability-list" id="probability-list">
+            {% if probabilities %}
+              {% for label, value in probabilities.items() %}
+                <div class="probability-row"><div><span>{{ label }}</span><strong>{{ value }}%</strong></div><div class="probability-track"><span style="width: {{ value }}%"></span></div></div>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <p class="result-footnote">A probabilidade é uma estimativa do classificador, não uma avaliação médica ou uma relação de causa e efeito.</p>
+        </section>
+
+        <section class="info-card">
+          <div class="info-icon">✳</div>
+          <h3>Como funciona?</h3>
+          <p>O formulário envia os atributos para o Flask. O pipeline aplica o mesmo tratamento de dados usado no treinamento e o Gaussian Naive Bayes estima uma das três classes.</p>
+          <div class="class-key">
+            <div><span class="class-dot low"></span><strong>Baixa</strong><small>tercil inferior</small></div>
+            <div><span class="class-dot medium"></span><strong>Média</strong><small>tercil intermediário</small></div>
+            <div><span class="class-dot high"></span><strong>Alta</strong><small>tercil superior</small></div>
+          </div>
+          {% if thresholds %}
+            <p class="threshold-note">Limites desta base: Baixa até {{ '%.2f'|format(thresholds.baixa_ate) }}; Média até {{ '%.2f'|format(thresholds.media_ate) }}; acima disso, Alta.</p>
+          {% endif %}
+        </section>
+
+        <section class="note-card">
+          <strong>Importante</strong>
+          <p>As classes são definidas pelos tercis de <code>actual_productivity_score</code> na base utilizada no treinamento. O modelo identifica padrões do dataset; não comprova que um hábito específico cause maior ou menor produtividade.</p>
+        </section>
+      </aside>
+    </section>
+
+    <footer class="footer">
+      <span>Projeto acadêmico · IFCE · Engenharia da Computação</span>
+      <span>Machine Learning · Gaussian Naive Bayes</span>
+    </footer>
+  </main>
+</body>
+</html>
