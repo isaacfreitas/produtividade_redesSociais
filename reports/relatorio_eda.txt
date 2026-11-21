@@ -1,6 +1,6 @@
 ANÁLISE EXPLORATÓRIA - SOCIAL MEDIA VS PRODUCTIVITY
 ==========================================================
-Arquivo CSV: C:\Users\isaac\.cache\kagglehub\datasets\mahdimashayekhi\social-media-vs-productivity\versions\1\social_media_vs_productivity.csv
+Arquivo CSV: /home/zac/.cache/kagglehub/datasets/mahdimashayekhi/social-media-vs-productivity/versions/1/social_media_vs_productivity.csv
 Registros originais: 30000
 Colunas originais: 19
 Duplicatas removidas: 0
